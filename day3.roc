@@ -69,30 +69,30 @@ expect chunkList [1, 2, 3, 4, 5, 6] 2 == [[1, 2], [3, 4], [5, 6]]
 
 commonSet : List (Set a) -> Set a | a has Eq
 commonSet = \list ->
-    result = list |> List.walk None \common, set ->
-        when common is
-            None -> Some set
-            Some value -> Some (Set.intersection value set)
-    when result is
-        None -> Set.empty
-        Some value -> value
+    list |> List.walk (list |> List.first |> Result.withDefault Set.empty) \common, set ->
+        Set.intersection common set
 
-expect ([[1, 2, 3], [2, 3, 4], [3, 4, 5]] |> List.map Set.fromList |> commonSet) == ([3] |> Set.fromList)
+expect ([[1, 2, 3], [2, 3, 4], [3, 4, 5]] |> List.map Set.fromList |> commonSet) |> Set.contains 3
 
-# part2 : Str -> U32
-# part2 = \file ->
-#     file
-#     |> Str.split "\n"
-#     |> List.map \row -> row |> Str.toScalars |> Set.fromList
-#     |> chunkList 3
-#     |> List.map 
+part2 : Str -> U32
+part2 = \file ->
+    file
+    |> Str.split "\n"
+    |> List.map \row -> row |> Str.toScalars |> Set.fromList
+    |> chunkList 3
+    |> List.map commonSet
+    |> List.map \set -> set |> Set.toList |> List.map score |> List.sum
+    |> List.sum
+
+expect part2 exampleInput == 70
 
 main =
     result <- Task.attempt (File.readUtf8 (Path.fromStr "./day3.txt"))
-    count = Result.map result \file -> { first: part1 file }
+    count = Result.map result \file -> { first: part1 file, second: part2 file }
     when count is
-        Ok { first } -> 
-            first |> Num.toStr |> Stdout.line
+        Ok { first, second } -> 
+            _ <- first |> Num.toStr |> Stdout.line |> Task.await
+            second |> Num.toStr |> Stdout.line
         Err e -> when e is
             FileReadUtf8Err _path _ -> Stdout.line "Bad path"
             FileReadErr _path readError -> readError |> File.readErrToStr |> Stdout.line
