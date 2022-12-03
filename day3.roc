@@ -17,7 +17,7 @@ expect score 65 == 27
 accumulateRow : Str -> Bag
 accumulateRow = \row ->
     scalars = row |> Str.toScalars
-    { before, others } = List.split scalars ((List.len scalars |> Num.toFrac) / 2 |> Num.floor)
+    { before, others } = List.split scalars (scalars |> List.len |> Num.divTrunc 2)
     {
         first: before |> List.map score |> Set.fromList,
         second: others |> List.map score |> Set.fromList,
@@ -55,8 +55,40 @@ CrZsJsPPZsGzwwsLwLmpwMDw
 
 expect part1 exampleInput == 157
 
+chunkList : List a, Nat -> List (List a)
+chunkList = \list, size ->
+    list
+    |> List.walk [] \chunks, next ->
+        if (chunks |> List.last |> Result.map List.len |> Result.withDefault 0) >= size then
+            List.append chunks [next]
+        else
+            last = chunks |> List.last |> Result.withDefault []
+            chunks |> List.dropLast |> List.append (List.append last next)
+
+expect chunkList [1, 2, 3, 4, 5, 6] 2 == [[1, 2], [3, 4], [5, 6]]
+
+commonSet : List (Set a) -> Set a | a has Eq
+commonSet = \list ->
+    result = list |> List.walk None \common, set ->
+        when common is
+            None -> Some set
+            Some value -> Some (Set.intersection value set)
+    when result is
+        None -> Set.empty
+        Some value -> value
+
+expect ([[1, 2, 3], [2, 3, 4], [3, 4, 5]] |> List.map Set.fromList |> commonSet) == ([3] |> Set.fromList)
+
+# part2 : Str -> U32
+# part2 = \file ->
+#     file
+#     |> Str.split "\n"
+#     |> List.map \row -> row |> Str.toScalars |> Set.fromList
+#     |> chunkList 3
+#     |> List.map 
+
 main =
-    result <- Task.attempt (File.readUtf8 (Path.fromStr "./day2.txt"))
+    result <- Task.attempt (File.readUtf8 (Path.fromStr "./day3.txt"))
     count = Result.map result \file -> { first: part1 file }
     when count is
         Ok { first } -> 
