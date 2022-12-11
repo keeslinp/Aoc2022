@@ -151,33 +151,6 @@ expect processFile exampleInput AllTogether == "MCD"
 part1 = \input -> processFile input OneAtATime
 part2 = \input -> processFile input AllTogether
 
-# part1 : Str -> Result Nat [BadFormat, InvalidNumStr]
-# part1 = \file -> 
-#     file
-#         |> Str.split "\n"
-#         |> List.mapTry parseLine
-#         |> Result.map List.len
-
-# part2 : Str -> Result Nat [BadFormat, InvalidNumStr]
-# part2 = \file -> 
-#     file
-#         |> Str.split "\n"
-#         |> List.mapTry parseLine
-#         |> Result.map List.len
-
-# exampleInput =
-# """
-# 2-4,6-8
-# 2-3,4-5
-# 5-7,7-9
-# 2-8,3-7
-# 6-6,4-6
-# 2-6,4-8
-# """
-
-# expect part1 exampleInput == Ok 2
-# expect part2 exampleInput == Ok 4
-
 main =
     result <- Task.attempt (File.readUtf8 (Path.fromStr "./day5.txt"))
     count = Result.map result \file -> { first: part1 file, second: part2 file }
